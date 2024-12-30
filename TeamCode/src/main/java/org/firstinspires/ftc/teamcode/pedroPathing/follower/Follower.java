@@ -35,6 +35,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Localizer;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.Pose;
 import org.firstinspires.ftc.teamcode.pedroPathing.localization.PoseUpdater;
+import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierLine;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.BezierPoint;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.MathFunctions;
 import org.firstinspires.ftc.teamcode.pedroPathing.pathGeneration.Path;
@@ -75,7 +76,7 @@ public class Follower {
 
     private DriveVectorScaler driveVectorScaler;
 
-    private PoseUpdater poseUpdater;
+    public PoseUpdater poseUpdater;
     private DashboardPoseTracker dashboardPoseTracker;
 
     private Pose closestPose;
@@ -107,7 +108,7 @@ public class Follower {
 
     private long reachedParametricPathEndTime;
 
-    private double[] drivePowers;
+    public double[] drivePowers;
     private double[] teleopDriveValues;
 
     private ArrayList<Vector> velocities = new ArrayList<>();
@@ -193,8 +194,15 @@ public class Follower {
             motor.setMotorType(motorConfigurationType);
         }
 
-        for (DcMotorEx motor : motors) {
-            motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+//        if (opModeType.equals(Globals.OpModeType.TELEOP)) {
+        if (true) {
+            for (DcMotorEx motor : motors) {
+                motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            }
+        } else {
+            for (DcMotorEx motor : motors) {
+                motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            }
         }
 
         dashboardPoseTracker = new DashboardPoseTracker(poseUpdater);
@@ -1061,5 +1069,19 @@ public class Follower {
      */
     private void resetIMU() throws InterruptedException {
         poseUpdater.resetIMU();
+    }
+
+    // Turn right: jiggle(-5)
+    // Turn left: jiggle(5)
+    public PathChain jiggle(double angle) {
+        return pathBuilder()
+                .addPath(
+                        // Line 1
+                        new BezierLine(
+                                new Point(getPose().getX(), getPose().getY(), Point.CARTESIAN),
+                                new Point(getPose().getX(), getPose().getY(), Point.CARTESIAN)
+                        )
+                )
+                .setLinearHeadingInterpolation(Math.toRadians(getPose().getHeading()), Math.toRadians(getPose().getHeading() + angle)).build();
     }
 }
